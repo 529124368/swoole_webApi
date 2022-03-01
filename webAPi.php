@@ -16,7 +16,7 @@ run(function () {
     $servername = '0.0.0.0';
     $dbname = 'mir3';
     $username = 'root';
-    $password = 'www565603';
+    $password = '';
     $pool = new PDOPool((new PDOConfig)
         ->withHost($servername)
         ->withPort(3306)
