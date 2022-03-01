@@ -114,7 +114,8 @@ class AccountHandle {
         }
         $userId = $request->cookie["userId"];
         $redis=$redisPool->get();
-        $redis->delete($userId);
+        $redis->del($userId);
+        $response->setcookie("userId","",-1,'/');
         //结果返回
         $res = array(
             "state" =>"ok",
