@@ -25,7 +25,8 @@ class Tools {
         //绘制随机的验证码
         $code = '';
         $key="QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm0123456789";
-        $code = $key[rand(0, strlen($key)-1)].$key[rand(0, strlen($key)-1)].$key[rand(0, strlen($key)-1)].$key[rand(0, strlen($key)-1)];
+        $len = strlen($key)-1;
+        $code = $key[mt_rand(0, $len)].$key[mt_rand(0, $len)].$key[mt_rand(0, $len)].$key[mt_rand(0, $len)];
         imagestring($img, 6, 13, 10, $code, $black);
         //加入噪点干扰
         for ($i = 0; $i < 50; $i++) {
@@ -37,7 +38,7 @@ class Tools {
         imagepng($img);
         $content = ob_get_contents();
         ob_end_clean();
-        return $content;
+        return [$content,$code];
     }
     
     public static function  uuid() {  

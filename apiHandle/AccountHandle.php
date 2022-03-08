@@ -15,7 +15,7 @@ class AccountHandle {
             $response->end(json_encode($res));
             return;
         }
-        if(!isset($request->post["account"]) || !isset($request->post["password"])) {
+        if(!isset($request->post["account"]) || !isset($request->post["password"]) || !isset($request->post["code"]) || !isset($request->cookie["userId"])) {
             //结果返回
             $res = array(
                 "state" =>"error",
@@ -23,6 +23,19 @@ class AccountHandle {
                 "message"=>"账号信息输入不正确1"
             );
             $response->end(json_encode($res));
+            return;
+        }
+        //验证码验证
+        $redis=$redisPool->get();
+        if($request->post["code"] != $redis->get($request->cookie["userId"])) {
+            //结果返回
+            $res = array(
+                "state" =>"error",
+                "data"=> "",
+                "message"=>"验证码不正确"
+            );
+            $response->end(json_encode($res));
+            $redisPool->put($redis);
             return;
         }
         $db = $pool->get();
@@ -37,6 +50,7 @@ class AccountHandle {
                 "message"=>"账号信息输入不正确2"
             );
             $response->end(json_encode($res));
+            $redisPool->put($redis);
             return;
         }
         //data 
@@ -52,6 +66,7 @@ class AccountHandle {
                 "message"=>"账号信息输入不正确3"
             );
             $response->end(json_encode($res));
+            $redisPool->put($redis);
             return;
         }
         //结果返回
@@ -60,11 +75,10 @@ class AccountHandle {
             "data"=> $res,
             "message"=>"查询成功"
         );
-        $redis=$redisPool->get();
-        $userId = Tools::uuid();
-        $redis->set($userId, "ok");
+        
+        $redis->set($request->cookie["userId"], "ok");
         $redisPool->put($redis);
-        $response->setcookie("userId",$userId,time()+3600*2,'/');
+        $response->setcookie("userId",$request->cookie["userId"],time()+3600*2,'/');
         $response->end(json_encode($res));
         $pool->put( $db);
     }
@@ -81,14 +95,25 @@ class AccountHandle {
             return;
         }
         $userId = isset($request->cookie["userId"])?$request->cookie["userId"]:"";
-        $redis=$redisPool->get();
-        if ($redis->get($userId)==="ok") {
-            //结果返回
-            $res = array(
-                "state" =>"ok",
-                "data"=> "",
-                "message"=>"登录过"
-            );
+        
+        if (!empty($userId)) {
+            $redis=$redisPool->get();
+            if($redis->get($userId)=="ok") {
+                //结果返回
+                $res = array(
+                    "state" =>"ok",
+                    "data"=> "",
+                    "message"=>"登录过"
+                );
+            }else {
+                //结果返回
+                $res = array(
+                    "state" =>"error",
+                    "data"=> "",
+                    "message"=>"没登录"
+                );
+            }
+            $redisPool->put($redis);
         }else {
              //结果返回
              $res = array(
@@ -97,7 +122,6 @@ class AccountHandle {
                 "message"=>"没登录"
             );
         }
-        $redisPool->put($redis);
         $response->end(json_encode($res));
     }
 
